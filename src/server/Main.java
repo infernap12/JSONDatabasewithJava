@@ -1,43 +1,79 @@
 package server;
 
-import javax.xml.crypto.Data;
-import java.security.KeyStore;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Main {
+    static int PORT = 25565;
     static final Scanner SCANNER = new Scanner(System.in);
 
     public static void main(String[] args) {
+        init(args);
         JSONDatabase db = new JSONDatabase();
-        System.out.println("Hello, world!");
+        System.out.println("Server started!");
 
-        while (true) {//menu
-            String[] input = SCANNER.nextLine().split(" ");
-            Command command = Command.get(input);
-            boolean result = true;
-            String output = null;
-            switch (command) {
-                case SET -> {
-                    result = db.set(command.index, command.text);
-                }
-                case GET -> {
-                    output = db.get(command.index);
-                    result = !output.isEmpty();
-                }
-                case DELETE -> {
-                    result = db.delete(command.index);
-                }
-                case EXIT -> System.exit(0);
-                default -> throw new IllegalStateException("Unexpected value: " + command);
+        try (ServerSocket server = new ServerSocket(PORT)) {
+            //while (true) {
+                Session session = new Session(server.accept());
+                session.start(); // does not block this server thread// it does until i let it not
+           // }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+
+
+//        while (true) {//menu
+//            String[] input = SCANNER.nextLine().split(" ");
+//            Command command = Command.get(input);
+//            boolean result = true;
+//            String output = null;
+//            switch (command) {
+//                case SET -> {
+//                    result = db.set(command.index, command.text);
+//                }
+//                case GET -> {
+//                    output = db.get(command.index);
+//                    result = !output.isEmpty();
+//                }
+//                case DELETE -> {
+//                    result = db.delete(command.index);
+//                }
+//                case EXIT -> System.exit(0);
+//                default -> throw new IllegalStateException("Unexpected value: " + command);
+//            }
+//            if (result) {
+//                System.out.println(Objects.requireNonNullElse(output, "OK"));
+//            } else {
+//                System.out.println("ERROR");
+//            }
+//        }
+    }
+
+    private static void init(String[] args) {
+        if (args.length % 2 == 0) {
+            Map<String, String> argumentMap = IntStream.range(0, args.length / 2)
+                    .boxed()
+                    .collect(Collectors.toMap(i -> args[i * 2], i -> args[i * 2 + 1]));
+//            if (argumentMap.containsKey("-i")) {
+//                address = argumentMap.get("-i");
+//            }
+            if (argumentMap.containsKey("-p")) {
+                PORT = Integer.parseInt(argumentMap.get("-p"));
             }
-            if (result) {
-                System.out.println(Objects.requireNonNullElse(output, "OK"));
-            } else {
-                System.out.println("ERROR");
-            }
+        } else {
+            System.out.println("Invalid args" + String.join(" ", args));
+            System.out.println("-i for ip address\neg. 0.0.0.0\n-p for port\neg. 8080");
+            System.exit(1);
         }
     }
 
