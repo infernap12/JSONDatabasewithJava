@@ -1,36 +1,31 @@
 package client;
 
-import util.Command;
+import com.google.gson.Gson;
+import util.Request;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Client {
     Socket socket;
-    Command command;
+    Request request;
 
-    Client(Socket socket, Command command) {
+    Client(Socket socket, Request request) {
         this.socket = socket;
-        this.command = command;
+        this.request = request;
     }
 
     public void execute() throws IOException {
         try (
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
                 DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                BufferedOutputStream bos = new BufferedOutputStream(dataOutputStream);
-                ObjectOutputStream oos = new ObjectOutputStream(bos);
         ) {
-            String type = command.getCommandType() != null ? command.getCommandType().name() : "";
-
-            String index = String.valueOf(command.getIndex()) == null ? "" : String.valueOf(command.getIndex());
-            String msg = command.getMessage() != null ? command.getMessage() : "";
-            oos.writeObject(command);
-            oos.flush();
-            System.out.println("CSent: %s %s %s".formatted(type, index, msg));
+            String jsonRequest = new Gson().toJson(request);
+            dataOutputStream.writeUTF(jsonRequest);
+            dataOutputStream.flush();
+            System.out.println("Client Sent: " + jsonRequest);
             String input = dataInputStream.readUTF();
-            System.out.println("CReceived: " + input);
+            System.out.println("Client Received: " + input);
 
         }
 

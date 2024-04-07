@@ -23,36 +23,6 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
-
-
-
-//        while (true) {//menu
-//            String[] input = SCANNER.nextLine().split(" ");
-//            Command command = Command.get(input);
-//            boolean result = true;
-//            String output = null;
-//            switch (command) {
-//                case SET -> {
-//                    result = db.set(command.index, command.text);
-//                }
-//                case GET -> {
-//                    output = db.get(command.index);
-//                    result = !output.isEmpty();
-//                }
-//                case DELETE -> {
-//                    result = db.delete(command.index);
-//                }
-//                case EXIT -> System.exit(0);
-//                default -> throw new IllegalStateException("Unexpected value: " + command);
-//            }
-//            if (result) {
-//                System.out.println(Objects.requireNonNullElse(output, "OK"));
-//            } else {
-//                System.out.println("ERROR");
-//            }
-//        }
     }
 
 

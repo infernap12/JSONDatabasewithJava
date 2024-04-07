@@ -1,6 +1,8 @@
 package server;
 
-import util.Command;
+import com.google.gson.Gson;
+import util.Request;
+import util.Response;
 
 import java.io.*;
 import java.net.Socket;
@@ -21,25 +23,23 @@ public class Session {
     private void run() {
         try (
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                BufferedInputStream bis = new BufferedInputStream(dataInputStream);
-                ObjectInputStream ois = new ObjectInputStream(bis);
                 DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream())
         ) {
-            Command command = (Command) ois.readObject();
-            System.out.println("SReceived: " + command.toString());
-            String output = db.execute(command);
-            outputStream.writeUTF(output);
+            String input = dataInputStream.readUTF();
+            System.out.println("Server Received: " + input);
+            Request request = new Gson().fromJson(input, Request.class);
+            Response response = db.execute(request);
+            String responseJson = new Gson().toJson(response);
+            outputStream.writeUTF(responseJson);
             outputStream.flush();
-            System.out.println("SSent: " + output);
+            System.out.println("Server Sent: " + responseJson);
             socket.close();
-            if (command.getCommandType() == Command.CommandType.EXIT) {
+            if (request.getType() == Request.RequestType.exit) {
                 System.exit(0);
             }
         } catch (IOException e) {
             //noinspection CallToPrintStackTrace
             e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
         }
     }
 }

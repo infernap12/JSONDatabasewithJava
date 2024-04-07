@@ -1,64 +1,63 @@
 package server;
 
-import util.Command;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import util.Request;
+import util.Response;
 
 public class JSONDatabase implements IDatabase{
 
 
-    List<String> fakeDB = new ArrayList<>(Collections.nCopies(1000, ""));
+    JsonObject db = new JsonObject();
 
-
+    //add == map.put()
     @Override
-    public boolean set(int index, String text) {
-        if (index < 0 || index > 999) {
-            return false;
-        } else {
-            fakeDB.set(index, text);
-        }
+    public boolean set(String key, String msg) {
+        db.addProperty(key, msg);
         return true;
     }
 
     @Override
-    public boolean delete(int index) {
-        return set(index, "");
+    public boolean delete(String key) {
+        JsonElement elem = db.remove(key);
+        return elem != null;
     }
 
     @Override
-    public String get(int index) {
-        String output = fakeDB.get(index);
-        if (output.isBlank()) {
-            output = null;
-        }
-        return output;
+    public String get(String key) {
+        JsonElement output = db.get(key);
+        return output == null ? null : output.getAsString();
     }
 
-    public String execute(Command command) {
-        boolean pass = false;
+    public Response execute(Request request) {
+        boolean isSucessful = false;
         String result = null;
-        switch (command.getCommandType()) {
-            case SET -> {
-                pass = set(command.getIndex(), command.getMessage());
+        String reason = null;
+
+        switch (request.getType()) {
+            case set -> {
+                isSucessful = set(request.getKey(), request.getValue());
             }
-            case GET -> {
-                result = get(command.getIndex());
+            case get -> {
+                result = get(request.getKey());
+                if (result == null) {
+                    reason = "No such key";
+                } else {
+                    isSucessful = true;
+                }
             }
-            case DELETE -> {
-                pass = delete(command.getIndex());
+            case delete -> {
+                isSucessful = delete(request.getKey());
+                if (!isSucessful) {
+                    reason = "No such key";
+                }
             }
-            case EXIT -> {
-                pass = true;
+            case exit -> {
+                isSucessful = true;
                 //System.exit(0);
             }
         }
-        if (result != null) {
-            return result;
-        } else {
-            return pass ? "OK" : "ERROR";
-        }
+        return new Response(isSucessful, result, reason);
 
     }
 }

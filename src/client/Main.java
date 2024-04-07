@@ -1,7 +1,7 @@
 package client;
 
 import com.beust.jcommander.*;
-import util.Command;
+import util.Request;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -14,10 +14,10 @@ public class Main {
     @Parameter(names = {"--port", "-p"}, description = "Port of server")
     static int PORT = 25565;
     @Parameter(names = {"--type", "-t"}, description = "Command type (get, set, delete, exit)")
-    Command.CommandType commandType;
-    @Parameter(names = {"--index", "-i"}, description = "Index of data")
-    int index;
-    @Parameter(names = {"--message", "-m"}, description = "Message data")
+    Request.RequestType commandRequestType;
+    @Parameter(names = {"--key", "-k"}, description = "Key for data")
+    String key;
+    @Parameter(names = {"--message", "-m", "-v"}, description = "Message data")
     String message;
 
 
@@ -33,8 +33,8 @@ public class Main {
     private void run() {
         try {
             try (Socket socket = new Socket(InetAddress.getByName(ADDRESS), PORT)) {
-                Command command = new Command(commandType, index, message);
-                Client client = new Client(socket, command);
+                Request request = new Request(commandRequestType, key, message);
+                Client client = new Client(socket, request);
                 client.execute();
             }
         } catch (UnknownHostException e) {

@@ -1,9 +1,9 @@
 package server;
 
 public interface IDatabase {
-    boolean set(int index, String text);
+    boolean set(String key, String msg);
 
-    boolean delete(int index);
+    boolean delete(String key);
 
-    String get(int index);
+    String get(String key);
 }
