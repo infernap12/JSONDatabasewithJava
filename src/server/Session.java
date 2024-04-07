@@ -1,15 +1,17 @@
 package server;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import util.Command;
+
+import java.io.*;
 import java.net.Socket;
 
 public class Session {
     private final Socket socket;
+    JSONDatabase db;
 
-    public Session(Socket socket) {
+    public Session(Socket socket, JSONDatabase db) {
         this.socket = socket;
+        this.db = db;
     }
 
     void start() {
@@ -18,18 +20,26 @@ public class Session {
 
     private void run() {
         try (
-                DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                BufferedInputStream bis = new BufferedInputStream(dataInputStream);
+                ObjectInputStream ois = new ObjectInputStream(bis);
                 DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream())
         ) {
-            String input = inputStream.readUTF();
-            System.out.println("Received: " + input);
-            String output = "A record # 12 was sent!";
+            Command command = (Command) ois.readObject();
+            System.out.println("SReceived: " + command.toString());
+            String output = db.execute(command);
             outputStream.writeUTF(output);
-            System.out.println("Sent: " + output);
+            outputStream.flush();
+            System.out.println("SSent: " + output);
             socket.close();
+            if (command.getCommandType() == Command.CommandType.EXIT) {
+                System.exit(0);
+            }
         } catch (IOException e) {
             //noinspection CallToPrintStackTrace
             e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 }

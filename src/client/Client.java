@@ -1,35 +1,39 @@
 package client;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import util.Command;
+
+import java.io.*;
 import java.net.Socket;
 import java.util.Scanner;
 
 public class Client {
     Socket socket;
+    Command command;
 
-    Client(Socket socket) {
+    Client(Socket socket, Command command) {
         this.socket = socket;
+        this.command = command;
     }
 
     public void execute() throws IOException {
         try (
-                DataInputStream input = new DataInputStream(socket.getInputStream());
-                DataOutputStream output = new DataOutputStream(socket.getOutputStream())
+                DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                BufferedOutputStream bos = new BufferedOutputStream(dataOutputStream);
+                ObjectOutputStream oos = new ObjectOutputStream(bos);
         ) {
-            Scanner scanner = new Scanner(System.in);
-            //while (true) {//menu
-                String userInput = "Give me a record # 12";//scanner.nextLine();
-                if (userInput.equalsIgnoreCase("exit")) {
-                    System.exit(0);
-                } else {
-                    System.out.println("Client started!");
-                    output.writeUTF(userInput);
-                    System.out.println("Sent: " + userInput);
-                    System.out.println("Received: " + input.readUTF());
-                }
-            //}
+            String type = command.getCommandType() != null ? command.getCommandType().name() : "";
+
+            String index = String.valueOf(command.getIndex()) == null ? "" : String.valueOf(command.getIndex());
+            String msg = command.getMessage() != null ? command.getMessage() : "";
+            oos.writeObject(command);
+            oos.flush();
+            System.out.println("CSent: %s %s %s".formatted(type, index, msg));
+            String input = dataInputStream.readUTF();
+            System.out.println("CReceived: " + input);
+
         }
+
     }
 }
+
