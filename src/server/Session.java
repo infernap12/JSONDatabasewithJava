@@ -6,21 +6,18 @@ import util.Response;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.concurrent.Callable;
 
-public class Session {
+public class Session implements Callable<Boolean> {
     private final Socket socket;
-    JSONDatabase db;
+    JSONDatabaseDAO dao;
 
-    public Session(Socket socket, JSONDatabase db) {
+    public Session(Socket socket, JSONDatabaseDAO dao) {
         this.socket = socket;
-        this.db = db;
+        this.dao = dao;
     }
 
-    void start() {
-        this.run();
-    }
-
-    private void run() {
+    public Boolean call() {
         try (
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
                 DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream())
@@ -28,18 +25,50 @@ public class Session {
             String input = dataInputStream.readUTF();
             System.out.println("Server Received: " + input);
             Request request = new Gson().fromJson(input, Request.class);
-            Response response = db.execute(request);
+            Response response = invoke(request);
             String responseJson = new Gson().toJson(response);
             outputStream.writeUTF(responseJson);
             outputStream.flush();
             System.out.println("Server Sent: " + responseJson);
             socket.close();
             if (request.getType() == Request.RequestType.exit) {
-                System.exit(0);
+                return true;
             }
         } catch (IOException e) {
             //noinspection CallToPrintStackTrace
             e.printStackTrace();
         }
+        return false;
+    }
+
+    private Response invoke(Request request) {
+        boolean isSuccessful = false;
+        String result = null;
+        String reason = null;
+
+        switch (request.getType()) {
+            case set -> {
+                isSuccessful = dao.set(request.getKey(), request.getValue());
+            }
+            case get -> {
+                result = dao.get(request.getKey());
+                if (result == null) {
+                    reason = "No such key";
+                } else {
+                    isSuccessful = true;
+                }
+            }
+            case delete -> {
+                isSuccessful = dao.delete(request.getKey());
+                if (!isSuccessful) {
+                    reason = "No such key";
+                }
+            }
+            case exit -> {
+                isSuccessful = true;
+                //System.exit(0);
+            }
+        }
+        return new Response(isSuccessful, result, reason);
     }
 }

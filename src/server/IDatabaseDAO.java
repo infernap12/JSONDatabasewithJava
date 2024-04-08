@@ -1,6 +1,6 @@
 package server;
 
-public interface IDatabase {
+public interface IDatabaseDAO {
     boolean set(String key, String msg);
 
     boolean delete(String key);

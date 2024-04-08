@@ -1,8 +1,12 @@
 package client;
 
 import com.beust.jcommander.*;
+import com.google.gson.Gson;
 import util.Request;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -19,6 +23,13 @@ public class Main {
     String key;
     @Parameter(names = {"--message", "-m", "-v"}, description = "Message data")
     String message;
+    @Parameter(names = {"--file", "-in"}, description = "Direct JSON request file")
+    String requestFileName = null;
+
+    {
+        File dataFolder = new File(System.getProperty("user.dir") + "/src/client/data/");
+        dataFolder.mkdirs();
+    }
 
 
     public static void main(String[] argv) {
@@ -33,7 +44,7 @@ public class Main {
     private void run() {
         try {
             try (Socket socket = new Socket(InetAddress.getByName(ADDRESS), PORT)) {
-                Request request = new Request(commandRequestType, key, message);
+                Request request = buildRequest();
                 Client client = new Client(socket, request);
                 client.execute();
             }
@@ -43,6 +54,21 @@ public class Main {
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    private Request buildRequest() {
+        Request request = null;
+        if (requestFileName != null) {
+            try {
+                FileReader fileReader = new FileReader(System.getProperty("user.dir") + "/src/client/data/" + requestFileName);
+                request = new Gson().fromJson(fileReader, Request.class);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            request = new Request(commandRequestType, key, message);
+        }
+        return request;
     }
 
 }
