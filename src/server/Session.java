@@ -48,9 +48,7 @@ public class Session implements Callable<Boolean> {
         String reason = null;
 
         switch (request.getType()) {
-            case set -> {
-                isSuccessful = dao.set(request.getKey(), request.getValue());
-            }
+            case set -> isSuccessful = dao.set(request.getKey(), request.getValue());
             case get -> {
                 result = dao.get(request.getKey());
                 if (result == null) {
@@ -65,10 +63,8 @@ public class Session implements Callable<Boolean> {
                     reason = "No such key";
                 }
             }
-            case exit -> {
-                isSuccessful = true;
-                //System.exit(0);
-            }
+            case exit -> //System.exit(0);
+                    isSuccessful = true;
         }
         return new Response(isSuccessful, result, reason);
     }

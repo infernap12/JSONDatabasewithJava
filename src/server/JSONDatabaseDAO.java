@@ -1,12 +1,9 @@
 package server;
 
 import com.google.gson.*;
-import util.Request;
-import util.Response;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.*;
 
@@ -31,6 +28,7 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
             this.databaseFile = new File(System.getProperty("user.dir") + "/src/server/data/db.json");
         }
         this.prettyGson = new GsonBuilder().setPrettyPrinting().create();
+        //noinspection ResultOfMethodCallIgnored
         databaseFile.getParentFile().mkdirs();
         if (!databaseFile.exists()) {
             writeDB(new JsonObject());
@@ -128,35 +126,4 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
         return output;
     }
 
-//    public Response execute(Request request) {
-//        boolean isSucessful = false;
-//        String result = null;
-//        String reason = null;
-//
-//        switch (request.getType()) {
-//            case set -> {
-//                isSucessful = set(request.getKeyPath(), request.getValue());
-//            }
-//            case get -> {
-//                result = get(request.getKeyPath());
-//                if (result == null) {
-//                    reason = "No such key";
-//                } else {
-//                    isSucessful = true;
-//                }
-//            }
-//            case delete -> {
-//                isSucessful = delete(request.getKeyPath());
-//                if (!isSucessful) {
-//                    reason = "No such key";
-//                }
-//            }
-//            case exit -> {
-//                isSucessful = true;
-//                //System.exit(0);
-//            }
-//        }
-//        return new Response(isSucessful, result, reason);
-//
-//    }
 }

@@ -3,7 +3,6 @@ package util;
 import com.google.gson.JsonElement;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class Request implements Serializable {
     RequestType type;
@@ -20,7 +19,7 @@ public class Request implements Serializable {
         set,
         get,
         delete,
-        exit;
+        exit
     }
 
     public RequestType getType() {

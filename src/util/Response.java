@@ -15,6 +15,6 @@ public class Response {
 
     public enum ResponseType {
         OK,
-        ERROR;
+        ERROR
     }
 }

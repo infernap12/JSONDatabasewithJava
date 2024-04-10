@@ -18,7 +18,7 @@ public class NetClient {
     public void execute() throws IOException {
         try (
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream())
         ) {
             String jsonRequest = new Gson().toJson(request);
             dataOutputStream.writeUTF(jsonRequest);

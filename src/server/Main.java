@@ -6,6 +6,9 @@ import com.beust.jcommander.Parameter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class Main {
@@ -28,27 +31,34 @@ public class Main {
     private void run() {
         JSONDatabaseDAO db = new JSONDatabaseDAO();
         System.out.println("Server started!");
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        ExecutorService executor = Executors.newCachedThreadPool();
         try (ServerSocket server = new ServerSocket(PORT)) {
             server.setSoTimeout(1000);
+            List<Future<Boolean>> futures = new ArrayList<>();
             while (!isTerminationReady) {
                 try {
                     Session session = new Session(server.accept(), db);
                     Future<Boolean> future = executor.submit(session);
-                    isTerminationReady = future.get();
+                    futures.add(future);
                 } catch (SocketTimeoutException e) {
-                    continue;
-                } catch (ExecutionException e) {
-                    throw new RuntimeException(e);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    // Timeout exception is expected, just ignore and continue
+                }
+                Iterator<Future<Boolean>> iterator = futures.iterator();
+                while (iterator.hasNext()) {
+                    Future<Boolean> future = iterator.next();
+                    if (future.isDone()) {
+                        iterator.remove();
+                        if (future.get()) {
+                            isTerminationReady = true;
+                            break;
+                        }
+                    }
                 }
 
 
-                //need to handle executor shutdown somehow?
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
         executor.shutdown();
         try {

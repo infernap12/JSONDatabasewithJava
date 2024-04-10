@@ -47,6 +47,7 @@ public class Main {
         } else {
             dataFolder = new File(System.getProperty("user.dir") + "/src/client/data/");
         }
+        //noinspection ResultOfMethodCallIgnored
         dataFolder.mkdirs();
         try {
             try (Socket socket = new Socket(InetAddress.getByName(ADDRESS), PORT)) {
@@ -63,7 +64,7 @@ public class Main {
     }
 
     private Request buildRequest() {
-        Request request = null;
+        Request request;
         if (requestFileName != null) {
             try {
                 FileReader fileReader = new FileReader(new File(dataFolder, requestFileName));
