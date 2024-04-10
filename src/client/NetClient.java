@@ -6,11 +6,11 @@ import util.Request;
 import java.io.*;
 import java.net.Socket;
 
-public class Client {
+public class NetClient {
     Socket socket;
     Request request;
 
-    Client(Socket socket, Request request) {
+    NetClient(Socket socket, Request request) {
         this.socket = socket;
         this.request = request;
     }

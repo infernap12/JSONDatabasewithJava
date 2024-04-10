@@ -5,11 +5,15 @@ import util.Request;
 import util.Response;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.locks.*;
 
 public class JSONDatabaseDAO implements IDatabaseDAO {
 
 
+    Gson prettyGson;
     ReadWriteLock lock;
 
     Lock readLock;
@@ -20,9 +24,17 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
         this.lock = new ReentrantReadWriteLock();
         this.readLock = lock.readLock();
         this.writeLock = lock.writeLock();
-        this.databaseFile = new File(System.getProperty("user.dir") + "/src/server/data/db.json");
+
+        if (Main.IS_TESTING) {
+            this.databaseFile = new File("C:\\Users\\james\\IdeaProjects\\JSON Database with Java\\JSON Database with Java\\task\\src\\server\\data\\db.json");
+        } else {
+            this.databaseFile = new File(System.getProperty("user.dir") + "/src/server/data/db.json");
+        }
+        this.prettyGson = new GsonBuilder().setPrettyPrinting().create();
         databaseFile.getParentFile().mkdirs();
-        writeDB(new JsonObject());
+        if (!databaseFile.exists()) {
+            writeDB(new JsonObject());
+        }
     }
 
     private JsonObject getDB() {
@@ -44,7 +56,7 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
         try {
             FileWriter fileWriter = new FileWriter(databaseFile);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
-            new Gson().toJson(db, bufferedWriter);
+            prettyGson.toJson(db, bufferedWriter);
             bufferedWriter.flush();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -52,33 +64,68 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
     }
 
 
+    private static String[] buildPathArray(JsonElement keyPath) {
+        List<String> pathList = new ArrayList<>();
+        keyPath.getAsJsonArray().iterator().forEachRemaining(x -> pathList.add(x.getAsString()));
+        return pathList.toArray(new String[0]);
+    }
+
+    private static JsonObject getTargetObject(JsonElement keyPath, JsonObject db) {
+        if (keyPath.isJsonPrimitive()) {
+            return db;
+        }
+
+        JsonObject targetObject = db;
+        String[] pathArray = buildPathArray(keyPath);
+
+        for (int i = 0; i < pathArray.length - 1; i++) {
+            targetObject = targetObject.getAsJsonObject(pathArray[i]);
+        }
+        return targetObject;
+    }
+
+    private String getKey(JsonElement key) {
+        if (key.isJsonPrimitive()) {
+            return key.getAsString();
+        } else {
+            String keyString = null;
+            for (JsonElement jsonElement : key.getAsJsonArray()) {
+                keyString = jsonElement.getAsString();
+            }
+            return keyString;
+        }
+    }
+
     @Override
-    public boolean set(String key, String msg) {
+    public boolean set(JsonElement key, JsonElement value) {
         writeLock.lock();
         JsonObject db = getDB();
-        db.addProperty(key, msg);
+        JsonObject targetObject = getTargetObject(key, db);
+        targetObject.add(getKey(key), value);
         writeDB(db);
         writeLock.unlock();
         return true;
     }
 
     @Override
-    public boolean delete(String key) {
+    public boolean delete(JsonElement keyPath) {
         writeLock.lock();
         JsonObject db = getDB();
-        JsonElement elem = db.remove(key);
+        JsonObject targetObject = getTargetObject(keyPath, db);
+        JsonElement elem = targetObject.remove(getKey(keyPath));
         writeDB(db);
         writeLock.unlock();
         return elem != null;
     }
 
     @Override
-    public String get(String key) {
+    public JsonElement get(JsonElement keyPath) {
         readLock.lock();
         JsonObject db = getDB();
-        JsonElement output = db.get(key);
+        JsonObject targetObject = getTargetObject(keyPath, db);
+        JsonElement output = targetObject.get(getKey(keyPath));
         readLock.unlock();
-        return output == null ? null : output.getAsString();
+        return output;
     }
 
 //    public Response execute(Request request) {
@@ -88,10 +135,10 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
 //
 //        switch (request.getType()) {
 //            case set -> {
-//                isSucessful = set(request.getKey(), request.getValue());
+//                isSucessful = set(request.getKeyPath(), request.getValue());
 //            }
 //            case get -> {
-//                result = get(request.getKey());
+//                result = get(request.getKeyPath());
 //                if (result == null) {
 //                    reason = "No such key";
 //                } else {
@@ -99,7 +146,7 @@ public class JSONDatabaseDAO implements IDatabaseDAO {
 //                }
 //            }
 //            case delete -> {
-//                isSucessful = delete(request.getKey());
+//                isSucessful = delete(request.getKeyPath());
 //                if (!isSucessful) {
 //                    reason = "No such key";
 //                }

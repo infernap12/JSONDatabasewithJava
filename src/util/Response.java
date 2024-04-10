@@ -1,12 +1,14 @@
 package util;
 
+import com.google.gson.JsonElement;
+
 public class Response {
     ResponseType response;
-    String value;
+    JsonElement value;
     String reason;
 
-    public Response(boolean pass, String result, String reason) {
-        this.value = result;
+    public Response(boolean pass, JsonElement value, String reason) {
+        this.value = value;
         this.response = pass ? ResponseType.OK : ResponseType.ERROR;
         this.reason = reason;
     }

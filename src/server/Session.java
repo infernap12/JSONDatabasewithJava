@@ -1,6 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import util.Request;
 import util.Response;
 
@@ -43,7 +44,7 @@ public class Session implements Callable<Boolean> {
 
     private Response invoke(Request request) {
         boolean isSuccessful = false;
-        String result = null;
+        JsonElement result = null;
         String reason = null;
 
         switch (request.getType()) {

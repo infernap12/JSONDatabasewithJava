@@ -1,9 +1,11 @@
 package server;
 
+import com.google.gson.JsonElement;
+
 public interface IDatabaseDAO {
-    boolean set(String key, String msg);
+    boolean set(JsonElement key, JsonElement value);
 
-    boolean delete(String key);
+    boolean delete(JsonElement key);
 
-    String get(String key);
+    JsonElement get(JsonElement key);
 }

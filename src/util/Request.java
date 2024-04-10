@@ -1,16 +1,19 @@
 package util;
 
+import com.google.gson.JsonElement;
+
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class Request implements Serializable {
     RequestType type;
-    String key;
-    String value;
+    JsonElement key;
+    JsonElement value;
 
-    public Request(RequestType type, String key, String message) {
+    public Request(RequestType type, JsonElement key, JsonElement value) {
         this.type = type;
-        this.key = key;
-        this.value = message;
+        this.value = value;
+        this.key = key; //key can be either JsonArray or JsonPrimitive String
     }
 
     public enum RequestType {
@@ -24,16 +27,20 @@ public class Request implements Serializable {
         return type;
     }
 
-    public String getKey() {
+
+    public JsonElement getKey() {
         return key;
     }
 
-    public String getValue() {
+    public JsonElement getValue() {
         return value;
     }
 
     @Override
     public String toString() {
-        return type + " " + key + " " + value;
+        return """
+                type  = %s
+                key   = %s
+                value = %s""".formatted(type.toString(), key.toString(), String.valueOf(value));
     }
 }
